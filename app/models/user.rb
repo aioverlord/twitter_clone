@@ -1,4 +1,6 @@
 class User < ActiveRecord::Base
+  attr_accessor :remember_token
+
   before_save { self.email = self.email.downcase }
 
   validates :name,  presence: true, 
@@ -23,5 +25,16 @@ class User < ActiveRecord::Base
   # Returns a random token
   def User.new_token
     SecureRandom.urlsafe_base64
+  end
+
+  # Updates remember_digest in database with hashed version of token
+  def remember
+    self.remember_token = User.new_token
+    update_attribute(:remember_digest, User.digest(remember_token))
+  end
+
+  # Returns true if given token matches hashed version in database
+  def authenticated?(remember_token)
+    BCrypt::Password.new(remember_digest).is_password?(remember_token)
   end
 end
